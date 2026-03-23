@@ -234,6 +234,10 @@ FodyWeavers.xsd
 !.vscode/extensions.json
 *.code-workspace
 .history/
+
+# Claude Code — not committed to git
+.claude/
+docs/superpowers/
 *.cab
 *.msi
 *.msix
