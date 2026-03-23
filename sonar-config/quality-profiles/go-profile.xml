@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<profile>
+  <name>Mati-Lab Go</name>
+  <language>go</language>
+  <rules>
+    <!-- Extends Sonar Way Go -->
+  </rules>
+</profile>
