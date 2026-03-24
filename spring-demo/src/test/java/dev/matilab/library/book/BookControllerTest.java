@@ -42,6 +42,16 @@ class BookControllerTest {
     }
 
     @Test
+    void createBook2_returns201() throws Exception {
+        Book book = new Book("Invincible", "Lem", "SciFi", 1951);
+        when(bookService.createBook(any())).thenReturn(book);
+        mockMvc.perform(post("/api/books")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(book)))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
     void getBook_notFound_propagatesException() {
         // Spring 6 propagates unhandled exceptions out of perform() rather than converting to 5xx
         when(bookService.getBookById(99L)).thenThrow(new IllegalArgumentException("not found"));

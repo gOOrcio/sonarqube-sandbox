@@ -244,3 +244,6 @@ docs/superpowers/
 *.msm
 *.msp
 *.sln.iml
+secrets.yml
+/.idea/sonarlint.xml
+/.idea/git_toolbox_prj.xml
