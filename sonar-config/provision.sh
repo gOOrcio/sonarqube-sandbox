@@ -1,16 +1,18 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-SONAR_URL="${SONAR_HOST_URL:-https://sonarqube.mati-lab.online}"
-SONAR_TOKEN="${SONAR_TOKEN:?SONAR_TOKEN env var required}"
+export SONAR_URL="${SONAR_HOST_URL:-https://sonarqube.mati-lab.online}"
+export SONAR_TOKEN="${SONAR_TOKEN:?SONAR_TOKEN env var required}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 auth() { echo "-u ${SONAR_TOKEN}:"; }
 
-sonar_get()  { curl -sf $(auth) "${SONAR_URL}${1}"; }
-sonar_post() { curl -sf $(auth) -X POST "${SONAR_URL}${1}" "${@:2}"; }
+sonar_get()   { curl -sf $(auth) "${SONAR_URL}${1}"; }
+sonar_get_q() { curl -sf $(auth) -G "${SONAR_URL}${1}" --data-urlencode "${2}"; }
+sonar_post()  { curl -sf $(auth) -X POST "${SONAR_URL}${1}" "${@:2}"; }
 
 # ── Quality Gates ──────────────────────────────────────────────────────────────
+# SonarQube 10.x: gates are identified by name, not numeric id.
 
 create_gate_if_missing() {
   local name="$1"
@@ -20,33 +22,34 @@ create_gate_if_missing() {
 import sys, json
 gates = json.load(sys.stdin).get('qualitygates', [])
 match = next((g for g in gates if g['name'] == '${name}'), None)
-print(match['id'] if match else '')
+print('found' if match else '')
 " 2>/dev/null || true)
 
   if [[ -n "$existing" ]]; then
-    echo "  Gate '${name}' already exists (id=${existing}), skipping creation"
-    gate_id="$existing"
+    echo "  Gate '${name}' already exists, re-applying conditions..."
   else
     echo "  Creating gate '${name}'..."
-    gate_id=$(sonar_post "/api/qualitygates/create" \
-      --data-urlencode "name=${name}" \
-      | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
-    echo "  Created gate id=${gate_id}"
+    sonar_post "/api/qualitygates/create" --data-urlencode "name=${name}" > /dev/null
+    echo "  Created"
   fi
 
-  # Apply conditions from JSON (idempotent: delete all then re-add)
+  # Idempotent: delete all conditions (including CAYC), then re-add from JSON
   echo "  Applying conditions..."
-  existing_conditions=$(sonar_get "/api/qualitygates/show?id=${gate_id}" \
-    | python3 -c "import sys,json; [print(c['id']) for c in json.load(sys.stdin).get('conditions',[])]" \
-    2>/dev/null || true)
+  existing_conditions=$(sonar_get_q "/api/qualitygates/show" "name=${name}" \
+    | python3 -c "
+import sys, json
+conds = json.load(sys.stdin).get('conditions', [])
+for c in conds:
+    print(c['id'])
+" 2>/dev/null || true)
   for cid in $existing_conditions; do
     sonar_post "/api/qualitygates/delete_condition" --data-urlencode "id=${cid}" > /dev/null
   done
 
-  python3 - "${gate_id}" "${json_file}" <<'EOF'
+  python3 - "${name}" "${json_file}" <<'EOF'
 import sys, json, urllib.request, urllib.parse, base64, os
 
-gate_id = sys.argv[1]
+gate_name = sys.argv[1]
 with open(sys.argv[2]) as f:
     gate = json.load(f)
 
@@ -57,14 +60,17 @@ headers = {"Authorization": f"Basic {auth}", "Content-Type": "application/x-www-
 
 for cond in gate['conditions']:
     params = urllib.parse.urlencode({
-        "gateId": gate_id,
+        "gateName": gate_name,
         "metric": cond["metric"],
         "op": cond["op"],
         "error": cond["error"]
     }).encode()
     req = urllib.request.Request(f"{base_url}/api/qualitygates/create_condition", data=params, headers=headers)
-    urllib.request.urlopen(req)
-    print(f"    Added condition: {cond['metric']} {cond['op']} {cond['error']}")
+    try:
+        urllib.request.urlopen(req)
+        print(f"    Added condition: {cond['metric']} {cond['op']} {cond['error']}")
+    except urllib.error.HTTPError as e:
+        print(f"    Warning: {cond['metric']} — {e.read().decode()}", file=sys.stderr)
 EOF
 }
 
