@@ -244,3 +244,4 @@ docs/superpowers/
 *.msm
 *.msp
 *.sln.iml
+secrets.yml
