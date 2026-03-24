@@ -42,7 +42,7 @@ class BookControllerTest {
     }
 
     @Test
-    void createBook_returns201() throws Exception {
+    void createBook2_returns201() throws Exception {
         Book book = new Book("Invincible", "Lem", "SciFi", 1951);
         when(bookService.createBook(any())).thenReturn(book);
         mockMvc.perform(post("/api/books")
