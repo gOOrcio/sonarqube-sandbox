@@ -1,0 +1,52 @@
+name: SonarQube Analysis — Go
+
+on:
+  workflow_call:
+    inputs:
+      project_key:
+        description: 'SonarQube project key'
+        required: true
+        type: string
+      working_directory:
+        description: 'Directory containing sonar-project.properties and go.mod'
+        required: false
+        type: string
+        default: '.'
+      go_version:
+        description: 'Go version to use'
+        required: false
+        type: string
+        default: '1.22'
+    secrets:
+      SONAR_TOKEN:
+        required: true
+
+jobs:
+  sonarqube:
+    name: SonarQube Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ inputs.go_version }}
+
+      - name: Run tests with coverage
+        working-directory: ${{ inputs.working_directory }}
+        run: go test ./... -coverprofile=coverage.out -covermode=atomic
+
+      - uses: sonarsource/sonarqube-scan-action@v3
+        with:
+          projectBaseDir: ${{ inputs.working_directory }}
+          args: >
+            -Dsonar.projectKey=${{ inputs.project_key }}
+            -Dsonar.host.url=https://sonarqube.mati-lab.online
+            ${{ github.event_name == 'pull_request' &&
+              format('-Dsonar.pullrequest.key={0} -Dsonar.pullrequest.branch={1} -Dsonar.pullrequest.base={2}',
+                github.event.pull_request.number, github.head_ref, github.base_ref) ||
+              format('-Dsonar.branch.name={0}', github.ref_name) }}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

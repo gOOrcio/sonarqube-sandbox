@@ -1,0 +1,20 @@
+name: Demo App CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'spring-demo/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'spring-demo/**'
+
+jobs:
+  sonarqube:
+    uses: ./.github/workflows/reusable-sonar-java.yml
+    with:
+      project_key: library
+      working_directory: spring-demo
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

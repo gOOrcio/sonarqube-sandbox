@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<profile>
+  <name>Mati-Lab Java</name>
+  <language>java</language>
+  <rules>
+    <!-- Extends Sonar Way — rules are inherited, overrides listed here -->
+    <!-- Cognitive complexity threshold: default 15, override to 10 -->
+    <rule>
+      <repositoryKey>java</repositoryKey>
+      <key>S3776</key>
+      <priority>MAJOR</priority>
+      <parameters>
+        <parameter><key>threshold</key><value>10</value></parameter>
+      </parameters>
+    </rule>
+  </rules>
+</profile>

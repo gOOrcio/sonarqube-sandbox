@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<profile>
+  <name>Mati-Lab Python</name>
+  <language>py</language>
+  <rules>
+    <!-- Extends Sonar Way Python -->
+  </rules>
+</profile>
