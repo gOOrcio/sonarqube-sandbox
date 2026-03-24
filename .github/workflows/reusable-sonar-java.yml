@@ -1,0 +1,53 @@
+name: SonarQube Analysis — Java
+
+on:
+  workflow_call:
+    inputs:
+      project_key:
+        description: 'SonarQube project key'
+        required: true
+        type: string
+      working_directory:
+        description: 'Directory containing gradlew (relative to repo root)'
+        required: false
+        type: string
+        default: '.'
+    secrets:
+      SONAR_TOKEN:
+        required: true
+
+jobs:
+  sonarqube:
+    name: SonarQube Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history required for branch/PR analysis
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Build and generate coverage
+        working-directory: ${{ inputs.working_directory }}
+        run: ./gradlew test jacocoTestReport
+
+      - name: SonarQube scan
+        working-directory: ${{ inputs.working_directory }}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          SONAR_ARGS="-Dsonar.projectKey=${{ inputs.project_key }}"
+          SONAR_ARGS="$SONAR_ARGS -Dsonar.host.url=https://sonarqube.mati-lab.online"
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            SONAR_ARGS="$SONAR_ARGS -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}"
+            SONAR_ARGS="$SONAR_ARGS -Dsonar.pullrequest.branch=${{ github.head_ref }}"
+            SONAR_ARGS="$SONAR_ARGS -Dsonar.pullrequest.base=${{ github.base_ref }}"
+          else
+            SONAR_ARGS="$SONAR_ARGS -Dsonar.branch.name=${{ github.ref_name }}"
+          fi
+
+          ./gradlew sonar $SONAR_ARGS
