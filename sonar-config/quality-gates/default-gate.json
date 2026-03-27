@@ -1,9 +1,10 @@
 {
   "name": "Mati-Lab Default",
   "conditions": [
-    { "metric": "new_coverage",                "op": "LT", "error": "80" },
-    { "metric": "new_duplicated_lines_density", "op": "GT", "error": "1"  },
+    { "metric": "new_coverage",                "op": "LT", "error": "40" },
+    { "metric": "new_duplicated_lines_density", "op": "GT", "error": "5"  },
     { "metric": "new_reliability_rating",       "op": "GT", "error": "1"  },
-    { "metric": "new_security_rating",          "op": "GT", "error": "1"  }
+    { "metric": "new_security_rating",          "op": "GT", "error": "1"  },
+    { "metric": "new_maintainability_rating",   "op": "GT", "error": "1"  }
   ]
 }

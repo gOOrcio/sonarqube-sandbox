@@ -125,4 +125,33 @@ import_profile_if_missing "Mati-Lab Go"         "go"   "${SCRIPT_DIR}/quality-pr
 import_profile_if_missing "Mati-Lab TypeScript" "ts"   "${SCRIPT_DIR}/quality-profiles/ts-profile.xml"
 echo ""
 
+# ── Project Assignments ────────────────────────────────────────────────────────
+
+assign_gate_to_project() {
+  local project_key="$1"
+  local gate_name="$2"
+  echo "  Assigning gate '${gate_name}' to project '${project_key}'..."
+  sonar_post "/api/qualitygates/select" \
+    --data-urlencode "projectKey=${project_key}" \
+    --data-urlencode "gateName=${gate_name}" > /dev/null
+  echo "  Done"
+}
+
+assign_profile_to_project() {
+  local project_key="$1"
+  local profile_name="$2"
+  local language="$3"
+  echo "  Assigning profile '${profile_name}' (${language}) to project '${project_key}'..."
+  sonar_post "/api/qualityprofiles/add_project" \
+    --data-urlencode "project=${project_key}" \
+    --data-urlencode "qualityProfile=${profile_name}" \
+    --data-urlencode "language=${language}" > /dev/null
+  echo "  Done"
+}
+
+echo "=== Project Assignments ==="
+assign_gate_to_project    "resto-rate-api" "Mati-Lab Default"
+assign_profile_to_project "resto-rate-api" "Mati-Lab Go" "go"
+echo ""
+
 echo "Provisioning complete."
