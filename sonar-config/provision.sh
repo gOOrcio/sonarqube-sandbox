@@ -152,6 +152,8 @@ assign_profile_to_project() {
 echo "=== Project Assignments ==="
 assign_gate_to_project    "resto-rate-api" "Mati-Lab Default"
 assign_profile_to_project "resto-rate-api" "Mati-Lab Go" "go"
+assign_gate_to_project    "resto-rate-web" "Mati-Lab Default"
+assign_profile_to_project "resto-rate-web" "Mati-Lab TypeScript" "ts"
 echo ""
 
 echo "Provisioning complete."
