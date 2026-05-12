@@ -16,7 +16,7 @@ on:
         description: 'Node.js version to use'
         required: false
         type: string
-        default: '20'
+        default: '22'
     secrets:
       SONAR_TOKEN:
         required: true
@@ -30,17 +30,22 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d # v3.0.0
+        with:
+          version: 11
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ inputs.node_version }}
+          cache: pnpm
+          cache-dependency-path: ${{ inputs.working_directory }}/pnpm-lock.yaml
 
       - name: Install dependencies
         working-directory: ${{ inputs.working_directory }}
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Run tests with coverage
         working-directory: ${{ inputs.working_directory }}
-        run: npx jest --coverage --coverageReporters=lcov --passWithNoTests
+        run: pnpm exec jest --coverage --coverageReporters=lcov --passWithNoTests
 
       - uses: sonarsource/sonarqube-scan-action@v3
         with:
