@@ -26,11 +26,11 @@ jobs:
     name: SonarQube Scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ inputs.python_version }}
 
@@ -45,7 +45,7 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
         run: pytest --cov=. --cov-report=xml --cov-report=term-missing
 
-      - uses: sonarsource/sonarqube-scan-action@v3
+      - uses: sonarsource/sonarqube-scan-action@v8
         with:
           projectBaseDir: ${{ inputs.working_directory }}
           args: >
